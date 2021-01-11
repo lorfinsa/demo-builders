@@ -1,17 +1,19 @@
 package com.example.demobuilders;
 
+import com.example.demobuilders.builder.FirmanteBuilder;
+import com.example.demobuilders.builder.SolicitudBuilder;
 import com.example.demobuilders.domain.Firmante;
 import com.example.demobuilders.domain.Solicitud;
 import com.example.demobuilders.dto.DtoProducto;
 import com.example.demobuilders.repository.SolicitudRepository;
 import com.example.demobuilders.service.MiService;
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.jdbc.Sql;
 
 @SpringBootTest
 @Slf4j
@@ -22,6 +24,8 @@ class ApplicationTests {
     private MiService service;
     @Autowired
     private SolicitudRepository solicitudRepository;
+    @Autowired
+    private EntityManager em;
 
 
     @Test
@@ -29,18 +33,29 @@ class ApplicationTests {
     }
 
     @Test
-    //@Sql("solicitudStandarNueva.sql")
     public void guardarFirmante_existeSolicitudNueva_guardaYNoModificaSolicitud() {
-        Solicitud solicitud = new Solicitud();
-        
-        Solicitud solicitudGuardada = solicitudRepository.save(solicitud);
-        
-        Firmante firmante = new Firmante();
-        firmante.setNombre("Juan");
-        
-        Solicitud solicitudDevuelta = service.guardarFirmante(solicitudGuardada.getId(), firmante);
+//        Solicitud solicitud = new Solicitud();
+//        solicitud.setClienteId("789");
+//        Solicitud solicitudGuardada = solicitudRepository.save(solicitud);
 
-        assertThat(solicitudDevuelta.getId()).isEqualTo(solicitudGuardada.getId());
+        //INICIALIZACION DEL TEST
+        Solicitud solicitudDePruebaGuardada = SolicitudBuilder
+                .solicitudNuevaClienteDefault()
+                .conNombreVacio()
+                .build(em);
+
+        Firmante firmante = FirmanteBuilder.juan().build();
+//        Firmante firmante = new Firmante();
+//        firmante.setNombre("Juan");
+        
+        //EJECUCION
+        Solicitud solicitudDevuelta = service.guardarFirmante(solicitudDePruebaGuardada.getId(), firmante);
+
+        //ASSERTS
+        assertThat(solicitudDevuelta.getId()).isEqualTo(solicitudDePruebaGuardada.getId());
+        assertThat(solicitudDevuelta.getClienteId()).isEqualTo("789");
+        
+        assertThat(solicitudDevuelta.getFirmantes()).hasSize(1);
         assertThat(solicitudDevuelta.getFirmantes().get(0).getNombre()).isEqualTo("Juan");
         
     }
